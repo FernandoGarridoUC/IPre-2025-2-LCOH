@@ -239,7 +239,7 @@ Voy a usar una regresión polinómica.
 variables = ['n_t', 'capex_he', 'opex_he']
 
 # Grado del polinomio
-grado = 2  #  Se puede cambiar el grado si se quiere (usar 2 o 3 como recomendación)
+grado = 3  #  Se puede cambiar el grado si se quiere (usar 2 o 3 como recomendación)
 
 # Detectar todas las tecnologías disponibles
 tecnologias = set()
@@ -329,3 +329,4 @@ for tech in tecnologias:
 
     plt.tight_layout()
     plt.show()
+
