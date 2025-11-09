@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
 
 
-# IMPORTANTE: Añadir DOCSTRINGS, que expliquen lo que gace la función, paráemetros, tipos de los parámetros, que retorna
-#             IMPORTAR  a Github, no OLVIDAR
-#             Cardemil en congreso, se entrega semana del 10
+# IMPORTANTE: Añadir DOCSTRINGS, que expliquen lo que hace la función, parámetros, tipos de los parámetros, que retorna
 
 
 # ------------------------------------------------------------
@@ -93,8 +93,14 @@ escenarios = {
         },
     }
 }
+"""
+Este es un diccionario con todos los datos útiles del artículo. Este diccionario se usa bastantes veces en el código.
+Tiene información respecto a cada parámetro relevante para cada fuente de energía, para cada escenario.
+Cabe destacar que hay espacio para mejora, para los datos de opex_he. Ya que se entregan de diversas formas en el artículo, en algunos casos
+se tuvo que ponderar para poder utilizar las funciones creadas.
 
-#c_carbon ($/kg CO2), no se aplica para NG ni green, solo para los blue.
+También, no está de más aclarar que el parámetro 'c_carbon' ($/kg CO2), no se aplica para NG ni green, solo para los blue.
+"""
 
 # ------------------------------------------------------------
 # Cálculo general y gráficos (con desglose de componentes)
@@ -111,22 +117,34 @@ for nombre_esc, datos in escenarios.items():
         n = p["n"]
         r = datos["r"]
         u = datos["u"]
-
         capex_he = p["capex_he"]
         opex_he = p["opex_he"]
         c_fuel = p["c_fuel"]
         ef_fuel = p["ef_fuel"]
         n_t = p["n_t"]
         c_carbon = p["c_carbon"]
+        
+        """
+        Se extrae la información del diccionario para su uso
+        """
 
         # Factor de recuperación de capital
         factor_recuperacion = (r * (1 + r)**n) / ((1 + r)**n - 1)
+        """
+        El factor de recuperación (float) es la relación entre una anualidad constante y la anualidad en un tiempo en específico.
+        Depende de: r (float) : Tasa de descuento anual, medido en porcentaje por año (%/año), 
+        y n (int) : Vida útil del equipo de calor, medido en años (año). 
+        """
 
         # Componentes de LCOH (Ecuación 1)
         capex_term = (capex_he * factor_recuperacion) / (datos["q_delivered"] * u)
         opex_term = opex_he / (datos["q_delivered"] * u)
         fuel_term = c_fuel / n_t
         carbon_term = (ef_fuel * c_carbon) / n_t
+
+        """
+        Vamos a dividir el LCOH según lo que aporta el capex, opex, combustible y carbono.
+        """
 
         # LCOH total
         lcoh_total = capex_term + opex_term + fuel_term + carbon_term
@@ -148,6 +166,10 @@ for nombre_esc, datos in escenarios.items():
     opex_vals = [componentes_lcoh[nombre_esc][t]["OPEX"] for t in tecnologias]
     fuel_vals = [componentes_lcoh[nombre_esc][t]["FUEL"] for t in tecnologias]
     carbon_vals = [componentes_lcoh[nombre_esc][t]["CARBON"] for t in tecnologias]
+
+    """
+    Se grafica el aporte de cada aspecto mencionado anteriormente.
+    """
 
     # Crear gráfico de barras apiladas
     plt.figure(figsize=(9, 5))
@@ -173,6 +195,10 @@ for nombre_esc, datos in escenarios.items():
     plt.grid(axis="y", linestyle="--", alpha=0.6)
     plt.legend()
 
+    """
+    Lo que viene son detalles para la visualización.
+    """
+    
     # Mostrar valores totales encima de cada barra
     totales = np.array(capex_vals) + np.array(opex_vals) + np.array(fuel_vals) + np.array(carbon_vals)
     for i, total in enumerate(totales):
@@ -195,16 +221,19 @@ for esc, techs in resultados_lcoh.items():
         comps = componentes_lcoh[esc][t]
         print(f"  {t:6s}: {v:.4f} $/kWh_t  (CAPEX={comps['CAPEX']:.4f}, OPEX={comps['OPEX']:.4f}, FUEL={comps['FUEL']:.4f}, CARBON={comps['CARBON']:.4f})")
 
+"""
+Se printean los aportes de cada aspecto en cada energía de cada escenario, así como el valor de los LCOH.
+"""
+
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------
 # Regresiones no lineales para eficiencia, CAPEX, OPEX, para cada fuente de energía.
 # ----------------------------------------------------------------------------------
 
-# Voy a usar una regresión polinómica
-
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
+""" 
+Voy a usar una regresión polinómica.
+"""
 
 # Variables a analizar
 variables = ['n_t', 'capex_he', 'opex_he']
@@ -246,11 +275,20 @@ for tech in tecnologias:
         print(f"⚠️  No hay suficientes datos para {tech}, se omite.")
         continue
 
+    """
+    Para hacer una regresión, se pone como requisito tener por lo menos 2 datos para cada fuente de energía, en caso que no
+    se cumpla esto, no se realizará el proceso.
+    """
+
     # Convertir a arrays numpy
     T_vals = np.array(T_vals).reshape(-1, 1)
     T_pred = np.linspace(min(T_vals), max(T_vals), 100).reshape(-1, 1)
     poly = PolynomialFeatures(degree=grado)
     T_poly = poly.fit_transform(T_vals)
+
+    """
+    Necesario para la operación de la función.
+    """
 
     # Crear figura
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))
