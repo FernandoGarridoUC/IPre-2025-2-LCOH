@@ -1,10 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
 
 
-# IMPORTANTE: Añadir DOCSTRINGS, que expliquen lo que hace la función, parámetros, tipos de los parámetros, que retorna
+# IMPORTANTE: Añadir DOCSTRINGS, que expliquen lo que gace la función, paráemetros, tipos de los parámetros, que retorna
 
 
 # ------------------------------------------------------------
@@ -53,7 +51,8 @@ def calcular_lcoh(c_i, q_delivered, u, c_fuel, n_t, ef_fuel, c_carbon): #($/kWh)
 # ------------------------------------------------------------
 escenarios = {
     "Steam boiler 150°C": {
-        "q_delivered": 5.13e7,
+        "q_delivered": 5.13e7, # (kWh/año)
+        "power_delivered": 5.86, # (MW_t)
         "u": 0.47,
         "r": 0.07,
         "tecnologias": {
@@ -68,39 +67,35 @@ escenarios = {
     },
 
     "Ethane cracker 850°C": {
-        "q_delivered": 4.27e9,
+        "q_delivered": 4.27e7, # Valor en el artículo era 4.27e9 (kWh/año), pero lo cambie por algo mas coherente
+        "power_delivered": 4.88, # (MW_t)
         "u": 1,
         "r": 0.07,
         "tecnologias": {
-            "NG":  {"capex_he": 1015.73e6, "opex_he": 0.05*1015.73e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850},
-            "B-NG":{"capex_he": 1015.73e6, "opex_he": 0.05*1015.73e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
-            "B-E": {"capex_he": 1523.59e6, "opex_he": 0.05*1523.59e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.067, "ef_fuel": 0.42, "n_t": 0.71, "n": 30, "c_carbon": 0.058, "T": 850}, #Mucho carbon, arreglar
-            "B-H2":{"capex_he": 1015.73e6, "opex_he": 0.05*1015.73e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.079, "ef_fuel": 0.27, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
-            "G-H2":{"capex_he": 1015.73e6, "opex_he": 0.05*1015.73e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.175, "ef_fuel": 0.00, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850}, #Mucho fuel, arreglar
+            "NG":  {"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850},
+            "B-NG":{"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
+            "B-E": {"capex_he": 1.52359e6, "opex_he": 0.05*1.52359e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.067, "ef_fuel": 0.42, "n_t": 0.71, "n": 30, "c_carbon": 0.058, "T": 850},    # Cambié el valor de capex_he que salía en el artículo por uno más razonable
+            "B-H2":{"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.079, "ef_fuel": 0.27, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
+            "G-H2":{"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.175, "ef_fuel": 0.00, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850}, 
         },
     },
 
     "Glass melter 1600°C": {
-        "q_delivered": 1.64e7,
+        "q_delivered": 1.64e7, # (kWh/año)
+        "power_delivered": 1.9, # (MW_t)
         "u": 1,
         "r": 0.07,
         "tecnologias": {
-            "NG":  {"capex_he": 3.34e6, "opex_he": 0.03*3.34e6/12, "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.40, "n": 12, "c_carbon": 0, "T": 1600}, #Falta capex, sobra fuel, arreglar
-            "B-NG":{"capex_he": 3.34e6, "opex_he": 0.03*3.34e6/12, "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.40, "n": 12, "c_carbon": 0.058, "T": 1600}, #Falta capex, sobra fuel y carbon, arreglar
-            "B-E": {"capex_he": 3.80e6, "opex_he": 0.28*3.80e6*(0.07*(1+0.07)**12)/((1+0.07)**12-1), "c_fuel": 0.067, "ef_fuel": 0.42, "n_t": 0.80, "n": 12, "c_carbon": 0.058, "T": 1600}, #Falta capex y opex
-            "B-H2":{"capex_he": 2.54e6, "opex_he": 0.03*2.54e6/12, "c_fuel": 0.079, "ef_fuel": 0.27, "n_t": 0.40, "n": 12, "c_carbon": 0.058, "T": 1600}, #Falta capex, arreglar
-            "G-H2":{"capex_he": 2.54e6, "opex_he": 0.03*2.54e6/12, "c_fuel": 0.175, "ef_fuel": 0.00, "n_t": 0.40, "n": 12, "c_carbon": 0, "T": 1600}, #Falta fuel, arreglar
+            "NG":  {"capex_he": 3.34e6, "opex_he": 0.03*3.34e6/12, "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.40, "n": 12, "c_carbon": 0, "T": 1600}, 
+            "B-NG":{"capex_he": 3.34e6, "opex_he": 0.03*3.34e6/12, "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.40, "n": 12, "c_carbon": 0.058, "T": 1600},
+            "B-E": {"capex_he": 3.80e6, "opex_he": 0.28*3.80e6*(0.07*(1+0.07)**12)/((1+0.07)**12-1), "c_fuel": 0.067, "ef_fuel": 0.42, "n_t": 0.80, "n": 12, "c_carbon": 0.058, "T": 1600}, 
+            "B-H2":{"capex_he": 2.54e6, "opex_he": 0.03*2.54e6/12, "c_fuel": 0.079, "ef_fuel": 0.27, "n_t": 0.40, "n": 12, "c_carbon": 0.058, "T": 1600},
+            "G-H2":{"capex_he": 2.54e6, "opex_he": 0.03*2.54e6/12, "c_fuel": 0.175, "ef_fuel": 0.00, "n_t": 0.40, "n": 12, "c_carbon": 0, "T": 1600}, 
         },
     }
 }
-"""
-Este es un diccionario con todos los datos útiles del artículo. Este diccionario se usa bastantes veces en el código.
-Tiene información respecto a cada parámetro relevante para cada fuente de energía, para cada escenario.
-Cabe destacar que hay espacio para mejora, para los datos de opex_he. Ya que se entregan de diversas formas en el artículo, en algunos casos
-se tuvo que ponderar para poder utilizar las funciones creadas.
 
-También, no está de más aclarar que el parámetro 'c_carbon' ($/kg CO2), no se aplica para NG ni green, solo para los blue.
-"""
+#c_carbon ($/kg CO2), no se aplica para NG ni green, solo para los blue.
 
 # ------------------------------------------------------------
 # Cálculo general y gráficos (con desglose de componentes)
@@ -117,34 +112,22 @@ for nombre_esc, datos in escenarios.items():
         n = p["n"]
         r = datos["r"]
         u = datos["u"]
+
         capex_he = p["capex_he"]
         opex_he = p["opex_he"]
         c_fuel = p["c_fuel"]
         ef_fuel = p["ef_fuel"]
         n_t = p["n_t"]
         c_carbon = p["c_carbon"]
-        
-        """
-        Se extrae la información del diccionario para su uso
-        """
 
         # Factor de recuperación de capital
         factor_recuperacion = (r * (1 + r)**n) / ((1 + r)**n - 1)
-        """
-        El factor de recuperación (float) es la relación entre una anualidad constante y la anualidad en un tiempo en específico.
-        Depende de: r (float) : Tasa de descuento anual, medido en porcentaje por año (%/año), 
-        y n (int) : Vida útil del equipo de calor, medido en años (año). 
-        """
 
         # Componentes de LCOH (Ecuación 1)
         capex_term = (capex_he * factor_recuperacion) / (datos["q_delivered"] * u)
         opex_term = opex_he / (datos["q_delivered"] * u)
         fuel_term = c_fuel / n_t
         carbon_term = (ef_fuel * c_carbon) / n_t
-
-        """
-        Vamos a dividir el LCOH según lo que aporta el capex, opex, combustible y carbono.
-        """
 
         # LCOH total
         lcoh_total = capex_term + opex_term + fuel_term + carbon_term
@@ -166,10 +149,6 @@ for nombre_esc, datos in escenarios.items():
     opex_vals = [componentes_lcoh[nombre_esc][t]["OPEX"] for t in tecnologias]
     fuel_vals = [componentes_lcoh[nombre_esc][t]["FUEL"] for t in tecnologias]
     carbon_vals = [componentes_lcoh[nombre_esc][t]["CARBON"] for t in tecnologias]
-
-    """
-    Se grafica el aporte de cada aspecto mencionado anteriormente.
-    """
 
     # Crear gráfico de barras apiladas
     plt.figure(figsize=(9, 5))
@@ -195,10 +174,6 @@ for nombre_esc, datos in escenarios.items():
     plt.grid(axis="y", linestyle="--", alpha=0.6)
     plt.legend()
 
-    """
-    Lo que viene son detalles para la visualización.
-    """
-    
     # Mostrar valores totales encima de cada barra
     totales = np.array(capex_vals) + np.array(opex_vals) + np.array(fuel_vals) + np.array(carbon_vals)
     for i, total in enumerate(totales):
@@ -221,39 +196,34 @@ for esc, techs in resultados_lcoh.items():
         comps = componentes_lcoh[esc][t]
         print(f"  {t:6s}: {v:.4f} $/kWh_t  (CAPEX={comps['CAPEX']:.4f}, OPEX={comps['OPEX']:.4f}, FUEL={comps['FUEL']:.4f}, CARBON={comps['CARBON']:.4f})")
 
-"""
-Se printean los aportes de cada aspecto en cada energía de cada escenario, así como el valor de los LCOH.
-"""
-
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------------
 # Regresiones no lineales para eficiencia, CAPEX, OPEX, para cada fuente de energía.
+# Ahora incluye impresión de:
+# - Ecuación polinómica
+# - Ecuación exponencial
+# - Ecuación logarítmica
 # ----------------------------------------------------------------------------------
 
-""" 
-Voy a usar una regresión polinómica.
-"""
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression
 
-# Variables a analizar
 variables = ['n_t', 'capex_he', 'opex_he']
+grado = 3
 
-# Grado del polinomio
-grado = 3  #  Se puede cambiar el grado si se quiere (usar 2 o 3 como recomendación)
-
-# Detectar todas las tecnologías disponibles
+# Detectar tecnologías
 tecnologias = set()
 for datos in escenarios.values():
     tecnologias.update(datos.get("tecnologias", {}).keys())
 
 # =====================================================
-# Procesar cada tecnología
-# =====================================================
-
 for tech in tecnologias:
-    print(f"\n{'='*60}")
-    print(f"Fuente de energía: {tech}")
-    print(f"{'='*60}")
+    print(f"\n{'='*70}")
+    print(f"📌 Fuente de energía: {tech}")
+    print(f"{'='*70}")
 
     # Recolectar datos
     T_vals = []
@@ -267,66 +237,126 @@ for tech in tecnologias:
                 continue
             T_vals.append(T)
             for var in variables:
-                valor = techs[tech].get(var)
-                datos[var].append(valor)
+                datos[var].append(techs[tech].get(var))
 
-    # Si no hay datos suficientes, saltar (mín 2)
     if len(T_vals) < 2:
-        print(f"⚠️  No hay suficientes datos para {tech}, se omite.")
+        print(f"⚠️ No hay suficientes datos para {tech}, se omite.")
         continue
 
-    """
-    Para hacer una regresión, se pone como requisito tener por lo menos 2 datos para cada fuente de energía, en caso que no
-    se cumpla esto, no se realizará el proceso.
-    """
-
-    # Convertir a arrays numpy
     T_vals = np.array(T_vals).reshape(-1, 1)
-    T_pred = np.linspace(min(T_vals), max(T_vals), 100).reshape(-1, 1)
-    poly = PolynomialFeatures(degree=grado)
-    T_poly = poly.fit_transform(T_vals)
+    T_pred = np.linspace(min(T_vals), max(T_vals), 200).reshape(-1, 1)
 
-    """
-    Necesario para la operación de la función.
-    """
-
-    # Crear figura
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
-    fig.suptitle(f"Regresiones polinómicas — Tecnología {tech}", fontsize=14)
-
-    # Guardar ecuaciones
-    ecuaciones = {}
+    fig, axes = plt.subplots(3, 3, figsize=(18, 14))
+    fig.suptitle(f"Regresiones para tecnología: {tech}", fontsize=16)
 
     # =====================================================
-    # Ajustar y graficar cada variable
-    # =====================================================
-    for i, var in enumerate(variables):
+    for row, var in enumerate(variables):
+
+        print(f"\n\n🔧 Parámetro: {var}")
+        print("-" * 70)
+
         y = np.array(datos[var])
-        model = LinearRegression()
-        model.fit(T_poly, y)
 
-        y_pred = model.predict(poly.transform(T_pred))
+        # ================================================
+        # 1) REGRESIÓN POLINÓMICA
+        # ================================================
+        poly = PolynomialFeatures(degree=grado)
+        T_poly = poly.fit_transform(T_vals)
+
+        model_poly = LinearRegression()
+        model_poly.fit(T_poly, y)
+
+        y_pred_poly = model_poly.predict(poly.transform(T_pred))
+
+        # Construir ecuación
+        intercept = model_poly.intercept_
+        coefs = model_poly.coef_
+
+        eq_terms = [f"{intercept:.4e}"]
+        for i, coef in enumerate(coefs[1:], start=1):
+            eq_terms.append(f"{coef:.4e}·T^{i}")
+
+        eq_poly = f"{var}(T) = " + " + ".join(eq_terms)
+
+        print("\n📈 Ecuación polinómica:")
+        print(eq_poly)
 
         # Gráfico
-        ax = axes[i]
-        ax.scatter(T_vals, y, color='blue', label='Datos reales')
-        ax.plot(T_pred, y_pred, color='red', label=f'Polinomio (grado {grado})')
-        ax.set_xlabel('Temperatura [°C]')
-        ax.set_ylabel(var)
-        ax.set_title(f"{var} vs T")
-        ax.legend()
+        ax = axes[row, 0]
+        ax.scatter(T_vals, y)
+        ax.plot(T_pred, y_pred_poly)
+        ax.set_title(f"{var} — Polinómica (grado {grado})")
         ax.grid(True)
 
-        # Ecuación polinómica
-        coefs = model.coef_
-        intercept = model.intercept_
-        terminos = [f"{c:.3e}·T^{i}" for i, c in enumerate(coefs)]
-        ecuacion = f"{var} = {intercept:.3e} + " + " + ".join(terminos[1:])
-        ecuaciones[var] = ecuacion
+        # ================================================
+        # 2) REGRESIÓN EXPONENCIAL: y = a·exp(bT)
+        # ================================================
+        print("\n📈 Ecuación exponencial:")
 
-        print(f"\n📈 Ecuación ajustada para {var} ({tech}):")
-        print(ecuacion)
+        try:
+            mask_pos = y > 0
+            T_pos = T_vals[mask_pos]
+            y_pos = y[mask_pos]
+
+            model_exp = LinearRegression()
+            model_exp.fit(T_pos, np.log(y_pos))
+
+            a = np.exp(model_exp.intercept_)
+            b = model_exp.coef_[0]
+
+            eq_exp = f"{var}(T) = {a:.4e} · exp({b:.4e}·T)"
+            print(eq_exp)
+
+            y_pred_exp = a * np.exp(b * T_pred)
+
+            ax = axes[row, 1]
+            ax.scatter(T_vals, y)
+            ax.plot(T_pred, y_pred_exp)
+            ax.set_title(f"{var} — Exponencial")
+            ax.grid(True)
+
+        except Exception as e:
+            print("❌ No se pudo ajustar (requiere y>0)")
+
+            ax = axes[row, 1]
+            ax.text(0.3, 0.5, "No se pudo ajustar\n(exige y>0)")
+            ax.set_title(f"{var} — Exponencial")
+            ax.axis("off")
+
+        # ================================================
+        # 3) REGRESIÓN LOGARÍTMICA: y = a + b ln(T)
+        # ================================================
+        print("\n📈 Ecuación logarítmica:")
+
+        try:
+            mask_Tpos = T_vals.flatten() > 0
+            T_log = np.log(T_vals[mask_Tpos])
+            y_log = y[mask_Tpos]
+
+            model_log = LinearRegression()
+            model_log.fit(T_log.reshape(-1, 1), y_log)
+
+            a_log = model_log.intercept_
+            b_log = model_log.coef_[0]
+
+            eq_log = f"{var}(T) = {a_log:.4e} + {b_log:.4e}·ln(T)"
+            print(eq_log)
+
+            y_pred_log = a_log + b_log * np.log(T_pred)
+
+            ax = axes[row, 2]
+            ax.scatter(T_vals, y)
+            ax.plot(T_pred, y_pred_log)
+            ax.set_title(f"{var} — Logarítmica")
+            ax.grid(True)
+
+        except Exception as e:
+            print("❌ No se pudo ajustar (requiere T>0)")
+
+            ax = axes[row, 2]
+            ax.text(0.3, 0.5, "No se pudo ajustar\n(exige T>0)")
+            ax.set_title(f"{var} — Logarítmica")
+            ax.axis("off")
 
     plt.tight_layout()
     plt.show()
-
