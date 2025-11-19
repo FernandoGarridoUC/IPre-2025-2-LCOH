@@ -68,16 +68,16 @@ escenarios = {
     },
 
     "Ethane cracker 850°C": {
-        "q_delivered": 4.27e7, # Valor en el artículo era 4.27e9 (kWh/año), pero lo cambie por algo mas coherente
+        "q_delivered": 4.27e9, # Valor en el artículo era 4.27e9 (kWh/año)
         "power_delivered": 4.88, # (MW_t)
         "u": 1,
         "r": 0.07,
         "tecnologias": {
-            "NG":  {"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850},
-            "B-NG":{"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
-            "B-E": {"capex_he": 1.52359e6, "opex_he": 0.05*1.52359e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.067, "ef_fuel": 0.42, "n_t": 0.71, "n": 30, "c_carbon": 0.058, "T": 850},    # Cambié el valor de capex_he que salía en el artículo por uno más razonable
-            "B-H2":{"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.079, "ef_fuel": 0.27, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
-            "G-H2":{"capex_he": 1.01573e6, "opex_he": 0.05*1.01573e6*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.175, "ef_fuel": 0.00, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850}, 
+            "NG":  {"capex_he": 1.01573e9, "opex_he": 0.05*1.01573e9*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850},
+            "B-NG":{"capex_he": 1.01573e9, "opex_he": 0.05*1.01573e9*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.010, "ef_fuel": 0.24, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
+            "B-E": {"capex_he": 1.52359e9, "opex_he": 0.05*1.52359e9*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.067, "ef_fuel": 0.42, "n_t": 0.71, "n": 30, "c_carbon": 0.058, "T": 850},
+            "B-H2":{"capex_he": 1.01573e9, "opex_he": 0.05*1.01573e9*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.079, "ef_fuel": 0.27, "n_t": 0.60, "n": 30, "c_carbon": 0.058, "T": 850},
+            "G-H2":{"capex_he": 1.01573e9, "opex_he": 0.05*1.01573e9*(0.07*(1+0.07)**30)/((1+0.07)**30-1), "c_fuel": 0.175, "ef_fuel": 0.00, "n_t": 0.60, "n": 30, "c_carbon": 0, "T": 850}, 
         },
     },
 
@@ -395,5 +395,78 @@ for tech in tecnologias:
             ax.set_title(f"{var} — Logarítmica")
             ax.axis("off")
 
+    plt.tight_layout()
+    plt.show()
+
+
+# -------------------------------------------------------------
+# Gráficos capex_he/q_delivered v/s Temperatura y capex_he/power_delivered v/s Temperaturas
+# -------------------------------------------------------------
+
+# -------------------------------------------------------------
+# Organizar datos por tecnología
+# -------------------------------------------------------------
+data_by_tech = {}
+
+for escenario, datos in escenarios.items():
+    q = datos["q_delivered"]
+    power = datos["power_delivered"]
+
+    for tech, tdata in datos["tecnologias"].items():
+        capex = tdata["capex_he"]
+        T = tdata["T"]
+
+        if tech not in data_by_tech:
+            data_by_tech[tech] = {
+                "T": [],
+                "capex_over_q": [],
+                "capex_over_power": [],
+                "escenario": []
+            }
+
+        data_by_tech[tech]["T"].append(T)
+        data_by_tech[tech]["capex_over_q"].append(capex / q)
+        data_by_tech[tech]["capex_over_power"].append(capex / power)
+        data_by_tech[tech]["escenario"].append(escenario)
+
+# -------------------------------------------------------------
+# Crear dos gráficos por tecnología
+# -------------------------------------------------------------
+for tech, info in data_by_tech.items():
+
+    T_vals = info["T"]
+    cap_q = info["capex_over_q"]
+    cap_p = info["capex_over_power"]
+    escenarios_list = info["escenario"]
+
+    # =============================
+    # 1) Gráfico: capex_he / q_delivered vs T
+    # =============================
+    plt.figure(figsize=(8,5))
+    plt.plot(T_vals, cap_q, marker="o")
+
+    for i, esc in enumerate(escenarios_list):
+        plt.annotate(esc, (T_vals[i], cap_q[i]), fontsize=8)
+
+    plt.xlabel("Temperatura (°C)")
+    plt.ylabel("Capex / Energía [USD*año/kWh]")
+    plt.title(f"Tecnología: {tech} — Capex / Energía vs Temperatura")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+    # =============================
+    # 2) Gráfico: capex_he / power_delivered vs T
+    # =============================
+    plt.figure(figsize=(8,5))
+    plt.plot(T_vals, cap_p, marker="s")
+
+    for i, esc in enumerate(escenarios_list):
+        plt.annotate(esc, (T_vals[i], cap_p[i]), fontsize=8)
+
+    plt.xlabel("Temperatura (°C)")
+    plt.ylabel("Capex / Potencia [USD/MW]")
+    plt.title(f"Tecnología: {tech} — Capex / Potencia vs Temperatura")
+    plt.grid(True)
     plt.tight_layout()
     plt.show()
